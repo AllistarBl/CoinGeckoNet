@@ -18,7 +18,8 @@ namespace CoinGeckoNet
         private static dynamic ExtensiveListTokensApiCall(string targetCurrency, int listCapacity, bool includeSparkline)
         {
             string sparkline = includeSparkline == true ? "true" : "false"; 
-            var apiString = string.Format("{0}/coins/markets?vs_currency={1}&order=market_cap_desc&per_page={2}&page=1&sparkline={3}", _rootUri, targetCurrency.ToLower().Trim(), listCapacity, includeSparkline.ToString().ToLower());
+            var apiString = string.Format("{0}/coins/markets?vs_currency={1}&order=market_cap_desc&per_page={2}&page=1&sparkline={3}", 
+                _rootUri, targetCurrency.ToLower().Trim(), listCapacity, includeSparkline.ToString().ToLower());
             return apiString.GetSimpleApiResponse();
         }
 
@@ -39,13 +40,22 @@ namespace CoinGeckoNet
 
         private static dynamic SpecificTokenHistoryCall(string id, string targetCurrency, int historyInDays, string interval)
         {
-            var apiString = string.Format("{0}/coins/{1}/market_chart?vs_currency={2}&days={3}&interval={4}", _rootUri, id.ToLower().Trim(), targetCurrency.ToLower().Trim(), historyInDays, interval);
+            var apiString = string.Format("{0}/coins/{1}/market_chart?vs_currency={2}&days={3}&interval={4}", 
+                _rootUri, id.ToLower().Trim(), targetCurrency.ToLower().Trim(), historyInDays, interval);
             return apiString.GetSimpleApiResponse();
         }
 
         private static dynamic SpecificTokenHistoryCallWithSpan(string id, string targetCurrency, double unixStart, double unixEnd)
         {
-            var apiString = string.Format("{0}/coins/{1}/market_chart/range?vs_currency={2}&from={3}&to={4}", _rootUri, id.ToLower().Trim(), targetCurrency.ToLower().Trim(), unixStart, unixEnd);
+            var apiString = string.Format("{0}/coins/{1}/market_chart/range?vs_currency={2}&from={3}&to={4}", 
+                _rootUri, id.ToLower().Trim(), targetCurrency.ToLower().Trim(), unixStart, unixEnd);
+            return apiString.GetSimpleApiResponse();
+        }
+
+        private static dynamic SpecificTokenPriceCall(string id, string targetCurrency, bool doReportUpdateTime)
+        {
+            var apiString = string.Format("{0}/simple/price?ids={1}&vs_currencies={2}&include_last_updated_at={3}",
+                _rootUri.ToLower().Trim(), id.ToLower().Trim(), targetCurrency.ToLower().Trim(), doReportUpdateTime.ToString().ToLower());
             return apiString.GetSimpleApiResponse();
         }
 
@@ -390,6 +400,27 @@ namespace CoinGeckoNet
             d.Add("Market Cap", marketCapLists);
             d.Add("Volume", volumeLists);
             return d;
+        }
+
+        /// <summary>
+        /// Queries the CoinGecko API for the most updated price data for the specified token pair. 
+        /// </summary>
+        /// <param name="tokenId">Token ID</param>
+        /// <param name="targetId">The currency against which the token is being measured.</param>
+        /// <param name="doReportUpdateTime">If set to true this will return a DateTime object that indicates the time at which the price feed was last updated.</param>
+        /// <returns>A TokenInfo object that contains simple price data. Note that the current price will be in terms of the specified target pair.</returns>
+        public static TokenInfo GetPriceData(string tokenId, string targetId, bool doReportUpdateTime)
+        {
+            var priceData = SpecificTokenPriceCall(tokenId, targetId, doReportUpdateTime);
+            var t = new TokenInfo();
+            t.ID = tokenId.ToLower().Trim();
+            var thisPrice = priceData.GetValue(tokenId.ToLower().Trim())
+                .GetValue(targetId).ToObject(0d.GetType());
+            t.CurrentPrice = (double?)thisPrice;
+            DateTime? updateTime = doReportUpdateTime ? 
+                t.LastUpdated = ((double)priceData.GetValue(tokenId.ToLower().Trim()).GetValue("last_updated_at")).UnixTimeStampToDateTime() :
+                null;
+            return t;
         }
     }
 }

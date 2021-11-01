@@ -13,15 +13,17 @@ namespace CoinGeckoNet
         static string _rootUri = "https://api.coingecko.com/api/v3";
         static void Main(string[] args)
         {
-            var spotMarkets = GetInfoByExchange.GetExchangeList();
-            var derivsMarkets = GetInfoByExchange.GetDerivativesExchangeList(GetInfoByExchange.DerivativesExchangesSortOrder.DescendingByOI);
-            var derivsMarketNames = derivsMarkets.Select(x => x.ID).ToList();
-            var derivsMarketInfos = GetInfoByExchange.GetDetailedDerivativesExchangeDataList(derivsMarketNames);
-            var allKnownCoins = GetTokenInfo.GetAllKnownTokenNames();
-            var closingBtcPriceFromDate = GetTokenInfo.GetClosingPriceFromDate("bitcoin", new DateTime(2019,3,12), new string[] { "usd", "eth" });
-            var getTopTokenInfos = GetTokenInfo.GetTokenInfoList();
-            var now = DateTime.Now;
-            var testSomeMore = getTopTokenInfos.FirstOrDefault().GetDatePricePairs(now.AddDays(-10), now);
+            //var spotMarkets = GetInfoByExchange.GetExchangeList();
+            //var derivsMarkets = GetInfoByExchange.GetDerivativesExchangeList(GetInfoByExchange.DerivativesExchangesSortOrder.DescendingByOI);
+            //var derivsMarketNames = derivsMarkets.Select(x => x.ID).ToList();
+            //var derivsMarketInfos = GetInfoByExchange.GetDetailedDerivativesExchangeDataList(derivsMarketNames);
+            //var allKnownCoins = GetTokenInfo.GetAllKnownTokenNames();
+            //var closingBtcPriceFromDate = GetTokenInfo.GetClosingPriceFromDate("bitcoin", new DateTime(2019,3,12), new string[] { "usd", "eth" });
+            //var getTopTokenInfos = GetTokenInfo.GetTokenInfoList();
+            //var now = DateTime.Now;
+            //var testSomeMore = getTopTokenInfos.FirstOrDefault().GetDatePricePairs(now.AddDays(-10), now);
+            var thisObj = GetTokenInfo.GetPriceData("bitcoin", "usd", true);
+            var x = 0;
         }
     }
 
@@ -70,7 +72,10 @@ namespace CoinGeckoApiExtensions
         public static DateTime UnixTimeStampToDateTime(this double unixTimeStamp)
         {
             DateTime dateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
-            dateTime = dateTime.AddMilliseconds(unixTimeStamp).ToLocalTime();
+            if (unixTimeStamp.ToString().Length <= 11)
+                dateTime = dateTime.AddSeconds(unixTimeStamp).ToLocalTime();
+            else
+                dateTime = dateTime.AddMilliseconds(unixTimeStamp).ToLocalTime();
             return dateTime;
         }
 
